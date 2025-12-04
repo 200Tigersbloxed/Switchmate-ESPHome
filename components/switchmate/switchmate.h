@@ -54,11 +54,11 @@ class SwitchmateController : public PollingComponent, public BLEClientNode, publ
 
         this->notify = notify;
 
-        battery_sensor = new sensor::Sensor();
-        state_switch = new SwitchmateSwitch(this);
-
         client->register_ble_node(this);
     }
+
+    void set_battery_sensor(esphome::sensor::Sensor *s) { battery_sensor = s; }
+    void set_state_switch(SwitchmateSwitch *s) { state_switch = s; }
 
     std::string name;
 
