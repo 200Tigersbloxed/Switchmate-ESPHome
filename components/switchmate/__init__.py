@@ -10,28 +10,26 @@ from .switchmate import (
 
 AUTO_LOAD = ["sensor", "switch", "ble_client"]
 
-CONFIG_SCHEMA = (
-    switch.SWITCH_SCHEMA.extend({
-        cv.GenerateID(): cv.declare_id(SwitchmateController),
-        cv.Required("ble_client_id"): cv.use_id(ble_client.BLEClient),
-        cv.Optional("notify", default=False): cv.boolean,
-        cv.Optional("update_interval", default="1s"): cv.update_interval,
-    })
-)
+CONFIG_SCHEMA = cv.Schema({
+    cv.GenerateID(): cv.declare_id(SwitchmateController),
+    cv.Required("ble_client_id"): cv.use_id(ble_client.BLEClient),
+    cv.Required("name"): cv.string,
+    cv.Optional("notify", default=False): cv.boolean,
+    cv.Optional("update_interval", default="1s"): cv.update_interval,
+}).extend(switch.SWITCH_SCHEMA)
 
-@switch.register_switch("switchmate", SwitchmateSwitch, CONFIG_SCHEMA)
+@switch.register_switch("switchmate", SwitchmateController, CONFIG_SCHEMA)
 async def to_code(config):
-    var = cg.new_Pvariable(
+    controller = cg.new_Pvariable(
         config[CONF_ID],
         config[CONF_NAME],
         config["notify"],
         config["update_interval"]
     )
-
-    await cg.register_component(var, config)
+    await cg.register_component(controller, config)
 
     client = await cg.get_variable(config["ble_client_id"])
-    cg.add(client.register_ble_node(var))
+    cg.add(client.register_ble_node(controller))
 
     # Battery sensor
     batt = await sensor.new_sensor({
@@ -39,11 +37,10 @@ async def to_code(config):
         "icon": "mdi:battery",
         "unit_of_measurement": "%",
     })
-    cg.add(var.set_battery_sensor(batt))
+    cg.add(controller.set_battery_sensor(batt))
 
     # State switch
-    sw = await switch.new_switch({
-        "name": config[CONF_NAME],
-        "icon": "mdi:light-switch",
-    })
-    cg.add(var.set_state_switch(sw))
+    sw = cg.new_Pvariable(controller)
+    await cg.register_component(sw, config)
+    cg.add(controller.set_state_switch(sw))
+
