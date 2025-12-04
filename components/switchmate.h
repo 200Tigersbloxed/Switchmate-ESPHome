@@ -1,5 +1,10 @@
-#include "esphome.h"
-using namespace ble_client;
+#include "esphome/core/component.h"
+#include "esphome/components/switch/switch.h"
+#include "esphome/components/sensor/sensor.h"
+#include "esphome/components/ble_client/ble_client.h"
+
+using namespace esphome;
+using namespace esphome::ble_client;
 
 static const char *const TAG = "switchmate";
 
@@ -23,7 +28,7 @@ class SwitchmateSwitchController {
     virtual void write_switch_state(bool state) = 0;
 };
 
-class SwitchmateSwitch : public Switch {
+class SwitchmateSwitch : public switch_::Switch {
   public:
     explicit SwitchmateSwitch(SwitchmateSwitchController *controller) {
         this->controller = controller;
@@ -31,10 +36,11 @@ class SwitchmateSwitch : public Switch {
 
     SwitchmateSwitchController *controller;
 
-    void write_state(bool state) {
+    void write_state(bool state) override {
         controller->write_switch_state(state);
     }
 };
+
 
 class SwitchmateController : public PollingComponent, public BLEClientNode, public SwitchmateSwitchController {
   public:
@@ -48,7 +54,7 @@ class SwitchmateController : public PollingComponent, public BLEClientNode, publ
 
         this->notify = notify;
 
-        battery_sensor = new Sensor();
+        battery_sensor = new sensor::Sensor();
         state_switch = new SwitchmateSwitch(this);
 
         client->register_ble_node(this);
@@ -58,7 +64,7 @@ class SwitchmateController : public PollingComponent, public BLEClientNode, publ
 
     bool notify;
 
-    Sensor *battery_sensor;
+    sensor::Sensor *battery_sensor;
     SwitchmateSwitch *state_switch;
 
     uint16_t battery_handle;
