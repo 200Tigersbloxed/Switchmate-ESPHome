@@ -18,7 +18,7 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional("update_interval", default="1s"): cv.update_interval,
 }).extend(switch.SWITCH_SCHEMA)
 
-@switch.register_switch("switchmate", SwitchmateController, CONFIG_SCHEMA)
+@switch.register_switch("switchmate", SwitchmateSwitch, CONFIG_SCHEMA)
 async def to_code(config):
     controller = cg.new_Pvariable(
         config[CONF_ID],
@@ -41,6 +41,4 @@ async def to_code(config):
 
     # State switch
     sw = cg.new_Pvariable(controller)
-    await cg.register_component(sw, config)
     cg.add(controller.set_state_switch(sw))
-
